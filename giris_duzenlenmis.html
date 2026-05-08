@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kayıt Ol | Proje Portalı</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- İkonlar için Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .register-container { margin-top: 50px; max-width: 450px; margin-bottom: 50px; }
+        .progress { height: 8px; border-radius: 5px; background-color: #e9ecef; }
+        #cvUploadSection { 
+            transition: all 0.3s ease; 
+            border-left: 4px solid #0d6efd; 
+            padding-left: 15px; 
+            background-color: #f0f7ff;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            border-radius: 0 5px 5px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container register-container">
+        <div class="card shadow border-0">
+            <div class="card-body p-5">
+                <h3 class="text-center mb-4">Yeni Hesap Oluştur</h3>
+                
+                <form id="registerForm" enctype="multipart/form-data">
+                    <!-- Ad Soyad -->
+                    <div class="mb-3">
+                        <label class="form-label">Ad Soyad</label>
+                        <input type="text" class="form-control" placeholder="Adınızı ve soyadınızı girin" required>
+                    </div>
+                    
+                    <!-- E-posta -->
+                    <div class="mb-3">
+                        <label class="form-label">E-posta</label>
+                        <input type="email" class="form-control" placeholder="örnek@mail.com" required>
+                    </div>
+
+                    <!-- Şifre ve Güç Analizi -->
+                    <div class="mb-3">
+                        <label for="registerPassword" class="form-label small text-muted">Şifre</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-lock"></i></span>
+                            <input type="password" id="registerPassword" class="form-control border-start-0 border-end-0" placeholder="Şifrenizi oluşturun" required>
+                            <button class="input-group-text bg-white" type="button" onclick="togglePassword('registerPassword', this)">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Dinamik Güç Barı -->
+                        <div class="progress mt-2">
+                            <div id="strengthBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <div id="strengthText" class="small mt-1 fw-bold text-muted" style="font-size: 0.75rem;">Şifre gücü bekleniyor...</div>
+                    </div>
+
+                    <!-- Şifre Tekrar -->
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label small text-muted">Şifre Tekrar</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-shield-check"></i></span>
+                            <input type="password" id="confirmPassword" class="form-control border-start-0 border-end-0" placeholder="Şifrenizi tekrar girin" required>
+                            <button class="input-group-text bg-white" type="button" onclick="togglePassword('confirmPassword', this)">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <div id="passwordError" class="text-danger small mt-1" style="display: none;">
+                            <i class="bi bi-x-circle-fill me-1"></i> Şifreler birbiriyle eşleşmiyor!
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <button type="submit" class="btn btn-primary w-100 mt-3">Kayıt Başvurusunu Tamamla</button>
+                </form>
+                
+                <div class="text-center mt-3">
+                    <p class="small">Zaten hesabın var mı? <a href="login.html" class="text-decoration-none">Giriş Yap</a></p>
+                    <a href="index.html" class="text-decoration-none small">← Ana Sayfaya Dön</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
+    // Şifre Göster/Gizle
+    function togglePassword(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const icon = btn.querySelector('i');
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        }
+    }
+
+</script>
+
+    <script>
+    // Elementleri Seçiyoruz[cite: 1]
+    const passInput = document.getElementById('registerPassword');
+    const confirmInput = document.getElementById('confirmPassword');
+    const strengthBar = document.getElementById('strengthBar');
+    const strengthText = document.getElementById('strengthText');    const registerForm = document.getElementById('registerForm');
+
+    // 1. Şifre Güç Analizi (Yazarken tetiklenir)[cite: 1]
+    passInput.addEventListener('input', function() {
+        const val = passInput.value;
+        let score = 0;
+        let feedback = { text: "Şifre gücü bekleniyor...", color: "#6c757d", width: "5%" };
+
+        if (val.length > 0) {
+            if (val.length >= 8) score++; 
+            if (/[A-Z]/.test(val)) score++;
+            if (/[a-z]/.test(val)) score++;
+            if (/[0-9]/.test(val)) score++;
+            if (/[^A-Za-z0-9]/.test(val)) score++;
+
+            if (score <= 2) {
+                feedback = { text: "Zayıf Şifre", color: "#dc3545", width: "25%" };
+            } else if (score === 3) {
+                feedback = { text: "Orta Seviye Şifre", color: "#ffc107", width: "50%" };
+            } else if (score === 4) {
+                feedback = { text: "İyi Şifre", color: "#0dcaf0", width: "75%" };
+            } else {
+                feedback = { text: "Güçlü Şifre!", color: "#198754", width: "100%" };
+            }
+        }
+
+        strengthBar.style.width = feedback.width;
+        strengthBar.style.backgroundColor = feedback.color;
+        strengthText.innerText = feedback.text;
+        strengthText.style.color = feedback.color;
+    });
+
+    // 3. Form Gönderim Kontrolü ve Onay Penceresi[cite: 1]
+    registerForm.addEventListener('submit', function(e) {
+        const passwordValue = passInput.value;
+        const confirmValue = confirmInput.value;
+        const errorDiv = document.getElementById('passwordError');
+        
+        // Şifre eşleşme kontrolü[cite: 1]
+        if (passwordValue !== confirmValue) {
+            errorDiv.style.display = 'block';
+            e.preventDefault(); 
+            return; 
+        } else {
+            errorDiv.style.display = 'none';
+        }
+
+        // Şifre Güç Puanını Hesapla (Onay penceresi için)[cite: 1]
+        let currentScore = 0;
+        if (passwordValue.length >= 8) currentScore++;
+        if (/[A-Z]/.test(passwordValue)) currentScore++;
+        if (/[a-z]/.test(passwordValue)) currentScore++;
+        if (/[0-9]/.test(passwordValue)) currentScore++;
+
+        // Zayıf şifre uyarısı[cite: 1]
+        if (currentScore <= 2) {
+            const proceed = confirm("Şifreniz zayıf! Güvenliğiniz için daha karmaşık bir şifre öneririz.\n\nBu şifreyle devam etmek istediğinizden emin misiniz?");
+            if (!proceed) {
+                e.preventDefault(); // Kullanıcı hayır derse gönderimi durdur[cite: 1]
+            }
+        }
+    });
+    
+    // Şifre Göster/Gizle
+    function togglePassword(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const icon = btn.querySelector('i');
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        }
+    }
+
+</script>
+</body>
+</html>

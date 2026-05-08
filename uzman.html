@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTS | Uzman Paneli ve Keşfet</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f4f7f6; }
+        .nav-tech { background: #1a1a1a; }
+
+        .expert-sidebar {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            position: sticky;
+            top: 20px;
+        }
+
+        .project-card { border: none; border-radius: 15px; transition: 0.3s; }
+        .project-card:hover { transform: translateY(-5px); }
+
+        #articleDetailView,
+        #addArticleView,
+        #editArticlesView,
+        #editSingleArticleView,
+        #statsView,
+        #savedView { display: none; }
+
+        .comment-box {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .form-view-card { border: none; border-radius: 15px; }
+        .form-label { font-weight: 600; font-size: 0.9rem; }
+        .badge-select { cursor: pointer; padding: 8px 14px; border-radius: 20px; border: 2px solid transparent; transition: 0.2s; user-select: none; }
+        .badge-select:hover { opacity: 0.8; }
+        .badge-select.selected { border-color: #0d6efd; }
+
+        .edit-article-card { border: none; border-radius: 12px; transition: 0.2s; }
+        .edit-article-card:hover { box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important; }
+
+        /* İstatistik kartları */
+        .stat-card {
+            border: none;
+            border-radius: 15px;
+            padding: 20px 22px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .stat-icon {
+            width: 52px; height: 52px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        .stat-value { font-size: 1.8rem; font-weight: 800; line-height: 1; }
+        .stat-label { font-size: 0.78rem; color: #6c757d; margin-top: 3px; }
+
+        /* Makale satır istatistik */
+        .article-stat-row {
+            border: none; border-radius: 12px;
+        }
+        .article-stat-row td { vertical-align: middle; padding: 12px 14px; }
+        .mini-bar-wrap { background: #e9ecef; border-radius: 20px; height: 7px; width: 80px; overflow: hidden; }
+        .mini-bar { height: 100%; border-radius: 20px; background: #0d6efd; }
+
+        /* Grafik çubukları */
+        .chart-bar-wrap { display: flex; align-items: flex-end; gap: 10px; height: 120px; }
+        .chart-bar-col { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+        .chart-bar { width: 100%; border-radius: 6px 6px 0 0; transition: 0.4s; }
+        .chart-bar-label { font-size: 0.7rem; color: #6c757d; text-align: center; }
+        .chart-bar-val { font-size: 0.72rem; font-weight: 700; color: #333; }
+
+        /* Toast */
+        #toastContainer { position: fixed; bottom: 24px; right: 24px; z-index: 9999; }
+        .toast-msg {
+            background: #198754; color: white;
+            padding: 12px 20px; border-radius: 10px;
+            font-size: 0.9rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+        /* Silme onayı */
+        .confirm-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+            z-index: 8888; display: flex; align-items: center; justify-content: center;
+        }
+        .confirm-box { background: white; border-radius: 15px; padding: 30px; max-width: 380px; width: 90%; text-align: center; }
+    
+        /* DARK MODE */
+        body.dark-mode {
+            background-color: #121212;
+            color: #f1f1f1;
+        }
+
+        body.dark-mode .expert-sidebar,
+        body.dark-mode .card,
+        body.dark-mode .confirm-box,
+        body.dark-mode .comment-box,
+        body.dark-mode .table,
+        body.dark-mode .table-light {
+            background-color: #1e1e1e !important;
+            color: #f1f1f1 !important;
+        }
+
+        body.dark-mode .text-muted,
+        body.dark-mode .chart-bar-label,
+        body.dark-mode .stat-label {
+            color: #bdbdbd !important;
+        }
+
+        body.dark-mode .form-control {
+            background-color: #2a2a2a;
+            border-color: #444;
+            color: white;
+        }
+
+        body.dark-mode .form-control::placeholder {
+            color: #aaa;
+        }
+
+        body.dark-mode .btn-light {
+            background-color: #2b2b2b;
+            color: white;
+            border-color: #444;
+        }
+
+        body.dark-mode .table-hover tbody tr:hover {
+            background-color: #2a2a2a;
+        }
+
+        body.dark-mode .nav-tech {
+            background: #000 !important;
+        }
+
+        body.dark-mode .mini-bar-wrap {
+            background: #333;
+        }
+
+        body.dark-mode .confirm-overlay {
+            background: rgba(0,0,0,0.7);
+        }
+
+    </style>
+</head>
+<body>
+
+<div id="toastContainer"></div>
+
+<div id="deleteConfirm" class="confirm-overlay" style="display:none;">
+    <div class="confirm-box shadow-lg">
+        <i class="bi bi-exclamation-triangle-fill text-warning fs-2 mb-3 d-block"></i>
+        <h6 class="fw-bold mb-2">Makaleyi Sil</h6>
+        <p class="text-muted small mb-4">Bu makaleyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</p>
+        <div class="d-flex gap-2 justify-content-center">
+            <button class="btn btn-sm btn-danger px-4" onclick="confirmDelete()">Evet, Sil</button>
+            <button class="btn btn-sm btn-secondary px-4" onclick="cancelDelete()">İptal</button>
+        </div>
+    </div>
+</div>
+
+<nav class="navbar navbar-dark nav-tech mb-4">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="#">
+            <i class="bi bi-cpu-fill me-2 text-primary"></i>HTS UZMAN SİSTEMİ
+        </a>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-warning text-dark">
+                <i class="bi bi-patch-check-fill"></i> Uzman Modu Aktif
+            </span>
+
+            <button class="btn btn-sm btn-outline-light" onclick="toggleDarkMode()" id="darkModeBtn">
+                <i class="bi bi-moon-fill"></i>
+            </button>
+
+            <a href="login.html" class="btn btn-sm btn-danger">Çıkış</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row">
+
+        <!-- SOL PANEL -->
+        <div class="col-lg-3 mb-4">
+            <div class="expert-sidebar shadow-sm">
+                <h6 class="fw-bold text-primary mb-3"><i class="bi bi-person-workspace me-2"></i>UZMAN PANELİ</h6>
+                <ul class="nav flex-column gap-2">
+                    <li><a class="nav-link btn btn-light text-start" id="menu-home" href="#" onclick="showHome()"><i class="bi bi-house-door me-2"></i> Keşfet</a></li>
+                    <li><a class="nav-link btn btn-light text-start" id="menu-add"  href="#" onclick="showAddArticle()"><i class="bi bi-plus-circle me-2"></i> Makale Ekle</a></li>
+                    <li><a class="nav-link btn btn-light text-start" id="menu-edit" href="#" onclick="showEditArticles()"><i class="bi bi-pencil-square me-2"></i> Makalelerimi Düzenle</a></li>
+                    <li><a class="nav-link btn btn-light text-start" id="menu-stats" href="#" onclick="showStats()"><i class="bi bi-graph-up me-2"></i> İstatistikler</a></li>
+                    <li><a class="nav-link btn btn-light text-start" id="menu-saved" href="#" onclick="showSaved()"><i class="bi bi-bookmark-fill me-2"></i> Kaydedilenler <span id="savedBadge" class="badge bg-success ms-1" style="display:none;">0</span></a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- ORTA ALAN -->
+        <div class="col-lg-9">
+
+            <!-- 1) MAKALE LİSTESİ -->
+            <div id="articleListView">
+                <h5 class="fw-bold mb-3">Güncel Makaleler</h5>
+                <div id="articleCards"></div>
+            </div>
+
+            <!-- 2) MAKALE DETAY -->
+            <div id="articleDetailView">
+                <button class="btn btn-sm btn-secondary mb-3" onclick="showHome()"><i class="bi bi-arrow-left"></i> Geri Dön</button>
+                <div class="card shadow-sm p-4">
+                    <h2 id="detailTitle" class="fw-bold text-dark"></h2>
+                    <p class="text-muted">Yazar: <span id="detailAuthor"></span> | <span id="detailDate"></span></p>
+                    <span id="detailBadge" class="badge mb-3" style="width:fit-content;"></span>
+                    <hr>
+                    <div id="detailContent" class="content mb-4"></div>
+                    <div class="d-flex gap-3 mb-4">
+                        <button class="btn btn-outline-primary btn-sm" id="likeBtn" onclick="toggleLike()">
+                            <i class="bi bi-hand-thumbs-up"></i> <span id="likeCount">0</span> Beğeni
+                        </button>
+                        <button class="btn btn-outline-success btn-sm" id="saveBtn" onclick="toggleSave()"><i class="bi bi-bookmark"></i> Kaydet</button>
+                    </div>
+                    <div class="mt-4">
+                        <h6 class="fw-bold mb-3">Yorumlar (<span id="commentCount">0</span>)</h6>
+                        <div id="commentsContainer"></div>
+                        <div class="mt-3">
+                            <textarea id="newComment" class="form-control mb-2" rows="2" placeholder="Uzman olarak yorum yapın..."></textarea>
+                            <button class="btn btn-primary btn-sm" onclick="addComment()">Yorum Gönder</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3) MAKALELERİMİ DÜZENLE -->
+            <div id="editArticlesView">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0">Makalelerimi Düzenle</h5>
+                    <button class="btn btn-sm btn-primary" onclick="showAddArticle()"><i class="bi bi-plus-circle me-1"></i> Yeni Makale</button>
+                </div>
+                <div id="myArticlesList"></div>
+            </div>
+
+            <!-- 4) TEK MAKALE DÜZENLEME -->
+            <div id="editSingleArticleView">
+                <button class="btn btn-sm btn-secondary mb-3" onclick="showEditArticles()"><i class="bi bi-arrow-left"></i> Listeye Dön</button>
+                <div class="card form-view-card shadow-sm p-4">
+                    <h5 class="fw-bold mb-4"><i class="bi bi-pencil-square me-2 text-primary"></i>Makaleyi Düzenle</h5>
+                    <input type="hidden" id="editArticleIndex">
+                    <div class="mb-3">
+                        <label class="form-label">Makale Başlığı</label>
+                        <input type="text" id="editTitle" class="form-control" placeholder="Başlık girin...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Kategori</label>
+                        <div class="d-flex flex-wrap gap-2" id="editCategoryGroup">
+                            <span class="badge bg-primary-subtle text-primary badge-select" onclick="selectCategory(this,'edit')">Yapay Zeka</span>
+                            <span class="badge bg-success-subtle text-success badge-select" onclick="selectCategory(this,'edit')">Siber Güvenlik</span>
+                            <span class="badge bg-warning-subtle text-warning badge-select" onclick="selectCategory(this,'edit')">Veri Bilimi</span>
+                            <span class="badge bg-danger-subtle text-danger badge-select" onclick="selectCategory(this,'edit')">Robotik</span>
+                            <span class="badge bg-info-subtle text-info badge-select" onclick="selectCategory(this,'edit')">IoT</span>
+                            <span class="badge bg-secondary-subtle text-secondary badge-select" onclick="selectCategory(this,'edit')">Diğer</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Özet</label>
+                        <input type="text" id="editSummary" class="form-control" placeholder="Kısa özet...">
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Makale İçeriği</label>
+                        <textarea id="editContent" class="form-control" rows="7" placeholder="Makale detaylı içeriğini buraya yazın..."></textarea>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary" onclick="saveEditedArticle()"><i class="bi bi-check-circle me-1"></i>Değişiklikleri Kaydet</button>
+                        <button class="btn btn-outline-secondary" onclick="showEditArticles()">İptal</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5) MAKALE EKLEME -->
+            <div id="addArticleView">
+                <button class="btn btn-sm btn-secondary mb-3" onclick="showHome()"><i class="bi bi-arrow-left"></i> Geri Dön</button>
+                <div class="card form-view-card shadow-sm p-4">
+                    <h5 class="fw-bold mb-4"><i class="bi bi-plus-circle me-2 text-primary"></i>Yeni Makale Ekle</h5>
+                    <div class="mb-3">
+                        <label class="form-label">Makale Başlığı <span class="text-danger">*</span></label>
+                        <input type="text" id="addTitle" class="form-control" placeholder="Başlık girin...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Kategori <span class="text-danger">*</span></label>
+                        <div class="d-flex flex-wrap gap-2" id="addCategoryGroup">
+                            <span class="badge bg-primary-subtle text-primary badge-select" onclick="selectCategory(this,'add')">Yapay Zeka</span>
+                            <span class="badge bg-success-subtle text-success badge-select" onclick="selectCategory(this,'add')">Siber Güvenlik</span>
+                            <span class="badge bg-warning-subtle text-warning badge-select" onclick="selectCategory(this,'add')">Veri Bilimi</span>
+                            <span class="badge bg-danger-subtle text-danger badge-select" onclick="selectCategory(this,'add')">Robotik</span>
+                            <span class="badge bg-info-subtle text-info badge-select" onclick="selectCategory(this,'add')">IoT</span>
+                            <span class="badge bg-secondary-subtle text-secondary badge-select" onclick="selectCategory(this,'add')">Diğer</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Özet <span class="text-danger">*</span></label>
+                        <input type="text" id="addSummary" class="form-control" placeholder="Makale hakkında kısa bir özet...">
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Makale İçeriği <span class="text-danger">*</span></label>
+                        <textarea id="addContent" class="form-control" rows="7" placeholder="Makale detaylı içeriğini buraya yazın..."></textarea>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary" onclick="submitArticle()"><i class="bi bi-send me-1"></i>Makaleyi Yayımla</button>
+                        <button class="btn btn-outline-secondary" onclick="showHome()">İptal</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6) İSTATİSTİKLER -->
+            <div id="statsView">
+                <h5 class="fw-bold mb-4"><i class="bi bi-graph-up me-2 text-primary"></i>İstatistikler</h5>
+
+                <!-- Özet kartları -->
+                <div class="row g-3 mb-4" id="statsTopCards"></div>
+
+                <!-- Kategori dağılımı + en çok beğenilen -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="card shadow-sm p-4" style="border:none;border-radius:15px;">
+                            <h6 class="fw-bold mb-3"><i class="bi bi-bar-chart me-2 text-primary"></i>Kategoriye Göre Beğeni</h6>
+                            <div class="chart-bar-wrap" id="categoryChart"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card shadow-sm p-4" style="border:none;border-radius:15px;">
+                            <h6 class="fw-bold mb-3"><i class="bi bi-trophy me-2 text-warning"></i>En Çok Beğenilen Makaleler</h6>
+                            <div id="topLikedList"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Makale detay tablosu -->
+                <div class="card shadow-sm p-4" style="border:none;border-radius:15px;">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-table me-2 text-primary"></i>Tüm Makaleler — Detaylı İstatistik</h6>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" id="statsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Makale</th>
+                                    <th>Kategori</th>
+                                    <th>Yazar</th>
+                                    <th>Tarih</th>
+                                    <th><i class="bi bi-hand-thumbs-up"></i> Beğeni</th>
+                                    <th><i class="bi bi-chat-dots"></i> Yorum</th>
+                                    <th>Etkileşim</th>
+                                </tr>
+                            </thead>
+                            <tbody id="statsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            </div><!-- /col -->
+
+            <!-- 7) KAYDEDİLENLER -->
+            <div id="savedView" style="display:none;">
+                <h5 class="fw-bold mb-3"><i class="bi bi-bookmark-fill me-2 text-success"></i>Kaydedilenler</h5>
+                <div id="savedArticleCards"></div>
+            </div>
+    </div><!-- /row -->
+</div><!-- /container -->
+
+<script>
+/* =============================================================
+   VERİ
+============================================================= */
+let articles = [
+    {
+        id: 1,
+        title: "Otonom Tarım Robotu Görüntü İşleme",
+        author: "Ahmet Demir",
+        category: "Yapay Zeka",
+        categoryClass: "bg-primary-subtle text-primary",
+        summary: "Tarla üzerindeki zararlı otları tespit edip ilaçlama yapan sistemin detayları.",
+        content: "Bu çalışmada, tarla koşullarında çalışan otonom bir tarım robotu için görüntü işleme altyapısı geliştirilmiştir. YOLOv8 mimarisi kullanılarak zararlı ot tespiti %94 doğrulukla gerçekleştirilmiştir.\n\nRobot, GPS destekli navigasyon sistemi ile tarlayı ızgara düzeninde tarayarak tespit ettiği bölgelere hassas ilaçlama uygulamaktadır. Python ve OpenCV kütüphaneleri kullanılmış, edge computing için NVIDIA Jetson Nano tercih edilmiştir.",
+        date: "12 Mayıs 2024",
+        likes: 87,
+        liked: false,
+        mine: false,
+        comments: [
+            { author: "Uzman Mehmet", text: "YOLOv8 seçimi çok isabetli olmuş, edge'de performansı nasıl?" },
+            { author: "Uzman Selin", text: "Veri setini kendiniz mi oluşturdunuz, yoksa hazır bir veri seti mi kullandınız?" },
+            { author: "Uzman Kerem", text: "Gerçekten etkileyici bir çalışma, tebrikler!" }
+        ]
+    },
+    {
+        id: 2,
+        title: "Kurumsal Ağlar İçin Giriş Tespit Sistemi",
+        author: "Elif Kurt",
+        category: "Siber Güvenlik",
+        categoryClass: "bg-success-subtle text-success",
+        summary: "Ağ trafiğini gerçek zamanlı analiz eden anomali tespit mimarisi.",
+        content: "Bu makale, kurumsal ağlarda siber saldırıları gerçek zamanlı olarak tespit eden bir IDS (Intrusion Detection System) mimarisini ele almaktadır.\n\nSistem, makine öğrenmesi tabanlı anomali tespiti ile kural bazlı filtrelemeyi hibrit olarak birleştirmektedir. Elasticsearch ve Kibana ile görselleştirilen log verileri üzerinde Random Forest algoritması uygulanmış, %97,3 doğruluk oranı elde edilmiştir.",
+        date: "18 Mayıs 2024",
+        likes: 64,
+        liked: false,
+        mine: false,
+        comments: [
+            { author: "Uzman Burak", text: "False positive oranı nedir? Bu konuda nasıl bir önlem aldınız?" },
+            { author: "Uzman Ayşe", text: "Kibana entegrasyonu hakkında daha detaylı bir kaynak paylaşabilir misiniz?" }
+        ]
+    },
+    {
+        id: 3,
+        title: "Derin Öğrenme ile Deprem Tahmini",
+        author: "Murat Yıldız",
+        category: "Veri Bilimi",
+        categoryClass: "bg-warning-subtle text-warning",
+        summary: "Sismik veri dizileri üzerinde LSTM ağları kullanarak deprem öncesi örüntü analizi.",
+        content: "Bu araştırmada Türkiye'nin Kandilli Rasathanesi'nden alınan 30 yıllık sismik veri üzerinde LSTM tabanlı zaman serisi analizi gerçekleştirilmiştir.\n\nModel, M4.0 ve üzeri depremleri 72 saat öncesinden %68 doğrulukla tahmin etmeyi başarmaktadır. Veri ön işleme aşamasında bandpass filtre ve FFT dönüşümü uygulanmıştır.",
+        date: "3 Haziran 2024",
+        likes: 112,
+        liked: false,
+        mine: false,
+        comments: [
+            { author: "Uzman Fatma", text: "68% tahmin doğruluğu gerçekten umut verici, erken uyarı sistemlerine entegre edilebilir mi?" },
+            { author: "Uzman Ali", text: "Hangi hiperparametre optimizasyonu kullandınız?" },
+            { author: "Uzman Zeynep", text: "Makaleyi çok beğendim, sismoloji alanında bu tür çalışmalar çok değerli." },
+            { author: "Uzman Can", text: "Kandilli dışında başka veri kaynaklarıyla da deneyecek misiniz?" }
+        ]
+    },
+    {
+        id: 4,
+        title: "IoT Tabanlı Akıllı Sera Yönetim Sistemi",
+        author: "Deniz Arslan",
+        category: "IoT",
+        categoryClass: "bg-info-subtle text-info",
+        summary: "MQTT protokolü ve ESP32 ile düşük maliyetli sera otomasyon çözümü.",
+        content: "Bu projede, ESP32 mikrodenetleyiciler ve çeşitli sensörler (DHT22, YL-69, MH-Z19) kullanılarak düşük maliyetli bir sera otomasyon sistemi tasarlanmıştır.\n\nSistem MQTT protokolü üzerinden bulut sunucusuna veri göndermekte, Node-RED dashboard ile anlık izleme yapılmaktadır. Sulama ve havalandırma sistemleri ML tabanlı karar mekanizmasıyla otomatik devreye girmektedir.",
+        date: "20 Haziran 2024",
+        likes: 45,
+        liked: false,
+        mine: false,
+        comments: [
+            { author: "Uzman Hasan", text: "Donanım maliyeti nedir yaklaşık olarak?" }
+        ]
+    },
+    {
+        id: 5,
+        title: "İnsansı Robot Denge Kontrolü: Model Öngörülü Kontrol",
+        author: "Ceren Öztürk",
+        category: "Robotik",
+        categoryClass: "bg-danger-subtle text-danger",
+        summary: "MPC algoritması kullanılarak çift bacaklı robotlarda dinamik denge ve yürüyüş kontrolü.",
+        content: "Bu çalışmada çift bacaklı insansı robot için Model Öngörülü Kontrol (MPC) algoritması uygulanmıştır. MATLAB/Simulink ortamında geliştirilen model, 12 serbestlik dereceli robot sistemini 50ms örnekleme periyodunda kontrol edebilmektedir.\n\nZMP (Zero Moment Point) kısıtı altında optimize edilen yürüyüş desenleri, gerçek zamanlı hesaplama için C++ ile yeniden kodlanmış ve Raspberry Pi 4 üzerinde test edilmiştir.",
+        date: "8 Temmuz 2024",
+        likes: 73,
+        liked: false,
+        mine: false,
+        comments: [
+            { author: "Uzman Tarık", text: "ZMP kısıtının nasıl modellediğinizi biraz daha açar mısınız?" },
+            { author: "Uzman Emre", text: "Raspberry Pi 4'ün gerçek zamanlı performansı yeterli oldu mu?" },
+            { author: "Uzman Nisa", text: "Harika bir çalışma! Akademik yayına dönüştürmeyi düşünüyor musunuz?" }
+        ]
+    }
+];
+
+let nextId = 6;
+let deleteTargetIndex = null;
+let currentArticleIdx = null;
+let savedArticleIds = new Set();
+
+/* =============================================================
+   GÖRÜNÜM YÖNETİMİ
+============================================================= */
+const views = ['articleListView','articleDetailView','addArticleView','editArticlesView','editSingleArticleView','statsView','savedView'];
+
+function showView(viewId, activeMenu) {
+    views.forEach(v => document.getElementById(v).style.display = 'none');
+    document.getElementById(viewId).style.display = 'block';
+    document.querySelectorAll('.expert-sidebar .nav-link').forEach(el => el.classList.remove('active'));
+    if (activeMenu) document.getElementById(activeMenu).classList.add('active');
+    window.scrollTo(0, 0);
+}
+
+function showHome()         { renderArticleCards(); showView('articleListView','menu-home'); }
+function showAddArticle()   { clearAddForm();        showView('addArticleView','menu-add'); }
+function showEditArticles() { renderMyArticlesList(); showView('editArticlesView','menu-edit'); }
+function showStats()        { renderStats();          showView('statsView','menu-stats'); }
+function showSaved()        { renderSavedCards();     showView('savedView','menu-saved'); }
+
+/* =============================================================
+   MAKALE LİSTESİ
+============================================================= */
+function renderArticleCards() {
+    const c = document.getElementById('articleCards');
+    c.innerHTML = '';
+    articles.forEach((a, idx) => {
+        c.innerHTML += `
+        <div class="card project-card shadow-sm mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="badge ${a.categoryClass}">${a.category}</span>
+                    <small class="text-muted">Uzman ${a.author}</small>
+                </div>
+                <h5 class="fw-bold">${a.title}</h5>
+                <p class="text-secondary small">${a.summary}</p>
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-sm btn-outline-primary" onclick="openArticle(${idx})">Devamını Oku</button>
+                    <small class="text-muted"><i class="bi bi-hand-thumbs-up me-1"></i>${a.likes}</small>
+                    <small class="text-muted"><i class="bi bi-chat-dots me-1"></i>${a.comments.length}</small>
+                </div>
+            </div>
+        </div>`;
+    });
+}
+
+/* =============================================================
+   MAKALE DETAY
+============================================================= */
+function openArticle(idx) {
+    const a = articles[idx];
+    currentArticleIdx = idx;
+    document.getElementById('detailTitle').innerText  = a.title;
+    document.getElementById('detailAuthor').innerText = a.author;
+    document.getElementById('detailDate').innerText   = a.date;
+    const badge = document.getElementById('detailBadge');
+    badge.className = 'badge mb-3 ' + a.categoryClass;
+    badge.style.width = 'fit-content';
+    badge.innerText = a.category;
+    document.getElementById('detailContent').innerHTML = a.content.replace(/\n/g,'<br>');
+    document.getElementById('likeCount').innerText = a.likes;
+    const likeBtn = document.getElementById('likeBtn');
+    if (a.liked) {
+        likeBtn.classList.replace('btn-outline-primary','btn-primary');
+    } else {
+        likeBtn.classList.remove('btn-primary');
+        likeBtn.classList.add('btn-outline-primary');
+    }
+
+    // Kaydet buton durumu
+    const saveBtn = document.getElementById('saveBtn');
+    if (savedArticleIds.has(a.id)) {
+        saveBtn.classList.replace('btn-outline-success','btn-success');
+        saveBtn.innerHTML = '<i class="bi bi-bookmark-fill"></i> Kaydedildi';
+    } else {
+        saveBtn.classList.replace('btn-success','btn-outline-success');
+        saveBtn.innerHTML = '<i class="bi bi-bookmark"></i> Kaydet';
+    }
+
+    const cc = document.getElementById('commentsContainer');
+    cc.innerHTML = '';
+    a.comments.forEach(c => {
+        const d = document.createElement('div');
+        d.className = 'comment-box small';
+        d.innerHTML = `<strong>${c.author}:</strong> ${c.text}`;
+        cc.appendChild(d);
+    });
+    document.getElementById('commentCount').innerText = a.comments.length;
+    showView('articleDetailView', null);
+}
+
+/* =============================================================
+   KAYDET
+============================================================= */
+function toggleSave() {
+    if (currentArticleIdx === null) return;
+    const a = articles[currentArticleIdx];
+    const btn = document.getElementById('saveBtn');
+    if (savedArticleIds.has(a.id)) {
+        savedArticleIds.delete(a.id);
+        btn.classList.replace('btn-success','btn-outline-success');
+        btn.innerHTML = '<i class="bi bi-bookmark"></i> Kaydet';
+        showToast('Makale kaydedilenlerden çıkarıldı.','secondary');
+    } else {
+        savedArticleIds.add(a.id);
+        btn.classList.replace('btn-outline-success','btn-success');
+        btn.innerHTML = '<i class="bi bi-bookmark-fill"></i> Kaydedildi';
+        showToast('Makale kaydedildi!','success');
+    }
+    updateSavedBadge();
+}
+
+function updateSavedBadge() {
+    const badge = document.getElementById('savedBadge');
+    const count = savedArticleIds.size;
+    badge.style.display = count > 0 ? 'inline-block' : 'none';
+    badge.innerText = count;
+}
+
+function renderSavedCards() {
+    const c = document.getElementById('savedArticleCards');
+    const saved = articles.filter(a => savedArticleIds.has(a.id));
+    if (!saved.length) {
+        c.innerHTML = `<div class="text-center text-muted py-5">
+            <i class="bi bi-bookmark fs-1 d-block mb-3"></i>
+            <p>Henüz kaydettiğiniz makale yok.</p>
+            <button class="btn btn-sm btn-outline-success" onclick="showHome()"><i class="bi bi-compass me-1"></i>Makalelere Gözat</button>
+        </div>`;
+        return;
+    }
+    const idx = (id) => articles.findIndex(a => a.id === id);
+    c.innerHTML = saved.map(a => `
+        <div class="card project-card shadow-sm mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="badge ${a.categoryClass}">${a.category}</span>
+                    <small class="text-muted">Uzman ${a.author}</small>
+                </div>
+                <h5 class="fw-bold">${a.title}</h5>
+                <p class="text-secondary small">${a.summary}</p>
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-sm btn-outline-primary" onclick="openArticle(${idx(a.id)})">Devamını Oku</button>
+                    <small class="text-muted"><i class="bi bi-hand-thumbs-up me-1"></i>${a.likes}</small>
+                    <small class="text-muted"><i class="bi bi-chat-dots me-1"></i>${a.comments.length}</small>
+                    <button class="btn btn-sm btn-outline-danger ms-auto" onclick="removeSaved(${a.id})"><i class="bi bi-bookmark-x"></i> Kaldır</button>
+                </div>
+            </div>
+        </div>`).join('');
+}
+
+function removeSaved(articleId) {
+    savedArticleIds.delete(articleId);
+    updateSavedBadge();
+    renderSavedCards();
+    showToast('Kaydedilenlerden çıkarıldı.','secondary');
+}
+
+/* =============================================================
+   BEĞENİ
+============================================================= */
+function toggleLike() {
+    if (currentArticleIdx === null) return;
+    const btn = document.getElementById('likeBtn');
+    const el  = document.getElementById('likeCount');
+    const a   = articles[currentArticleIdx];
+    if (!a.liked) {
+        btn.classList.replace('btn-outline-primary','btn-primary');
+        a.likes++;
+        a.liked = true;
+    } else {
+        btn.classList.replace('btn-primary','btn-outline-primary');
+        a.likes--;
+        a.liked = false;
+    }
+    el.innerText = a.likes;
+}
+
+/* =============================================================
+   YORUM EKLEME
+============================================================= */
+function addComment() {
+    const txt = document.getElementById('newComment').value.trim();
+    if (!txt || currentArticleIdx === null) return;
+    const comment = { author: 'Siz (Uzman)', text: txt };
+    articles[currentArticleIdx].comments.push(comment);
+    const cc = document.getElementById('commentsContainer');
+    const d = document.createElement('div');
+    d.className = 'comment-box small';
+    d.innerHTML = `<strong>${comment.author}:</strong> ${comment.text}`;
+    cc.appendChild(d);
+    document.getElementById('newComment').value = '';
+    document.getElementById('commentCount').innerText = articles[currentArticleIdx].comments.length;
+}
+
+/* =============================================================
+   KATEGORİ SEÇİMİ
+============================================================= */
+function selectCategory(el, mode) {
+    const gid = mode === 'add' ? 'addCategoryGroup' : 'editCategoryGroup';
+    document.getElementById(gid).querySelectorAll('.badge-select').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+}
+
+function getSelectedCategory(mode) {
+    const gid = mode === 'add' ? 'addCategoryGroup' : 'editCategoryGroup';
+    const sel = document.getElementById(gid).querySelector('.badge-select.selected');
+    if (!sel) return null;
+    return { label: sel.innerText.trim(), cls: sel.className.replace(' badge-select','').replace(' selected','').trim() };
+}
+
+/* =============================================================
+   MAKALE EKLEME
+============================================================= */
+function submitArticle() {
+    const title   = document.getElementById('addTitle').value.trim();
+    const summary = document.getElementById('addSummary').value.trim();
+    const content = document.getElementById('addContent').value.trim();
+    const cat     = getSelectedCategory('add');
+    if (!title || !summary || !content || !cat) { showToast('Lütfen tüm alanları doldurun ve bir kategori seçin.','danger'); return; }
+    const today = new Date().toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'});
+    articles.unshift({ id:nextId++, title, author:'Siz', category:cat.label, categoryClass:cat.cls,
+        summary, content, date:today, likes:0, liked:false, mine:true, comments:[] });
+    showToast('Makale başarıyla yayımlandı!');
+    
+/* =============================================================
+   DARK MODE
+============================================================= */
+function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+
+    const btn = document.getElementById('darkModeBtn');
+
+    if (document.body.classList.contains('dark-mode')) {
+        btn.innerHTML = '<i class="bi bi-sun-fill"></i>';
+        localStorage.setItem('darkMode', 'enabled');
+    } else {
+        btn.innerHTML = '<i class="bi bi-moon-fill"></i>';
+        localStorage.setItem('darkMode', 'disabled');
+    }
+}
+
+// Sayfa açıldığında dark mode kontrolü
+window.onload = function () {
+    if (localStorage.getItem('darkMode') === 'enabled') {
+        document.body.classList.add('dark-mode');
+
+        const btn = document.getElementById('darkModeBtn');
+        if (btn) {
+            btn.innerHTML = '<i class="bi bi-sun-fill"></i>';
+        }
+    }
+};
+
+
+showHome();
+}
+
+function clearAddForm() {
+    ['addTitle','addSummary','addContent'].forEach(id => document.getElementById(id).value='');
+    document.getElementById('addCategoryGroup').querySelectorAll('.badge-select').forEach(b=>b.classList.remove('selected'));
+}
+
+/* =============================================================
+   MAKALELERİMİ DÜZENLE
+============================================================= */
+function renderMyArticlesList() {
+    const list = document.getElementById('myArticlesList');
+    const mine = articles.map((a,idx)=>({...a,idx})).filter(a=>a.mine);
+    if (!mine.length) {
+        list.innerHTML = `<div class="text-center text-muted py-5">
+            <i class="bi bi-journal-x fs-1 d-block mb-3"></i><p>Henüz makale eklemediniz.</p>
+            <button class="btn btn-primary btn-sm" onclick="showAddArticle()"><i class="bi bi-plus-circle me-1"></i>İlk Makalenizi Ekleyin</button></div>`;
+        return;
+    }
+    list.innerHTML = mine.map(a=>`
+        <div class="card edit-article-card shadow-sm mb-3 p-3">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <span class="badge ${a.categoryClass} mb-1">${a.category}</span>
+                    <h6 class="fw-bold mb-1">${a.title}</h6>
+                    <p class="text-muted small mb-0">${a.summary}</p>
+                    <small class="text-muted"><i class="bi bi-calendar3 me-1"></i>${a.date}
+                    &nbsp;|&nbsp;<i class="bi bi-hand-thumbs-up me-1"></i>${a.likes}
+                    &nbsp;|&nbsp;<i class="bi bi-chat-dots me-1"></i>${a.comments.length}</small>
+                </div>
+                <div class="d-flex gap-2 ms-3 flex-shrink-0">
+                    <button class="btn btn-sm btn-outline-primary" onclick="openEditSingle(${a.idx})"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-outline-danger"  onclick="askDelete(${a.idx})"><i class="bi bi-trash"></i></button>
+                </div>
+            </div>
+        </div>`).join('');
+}
+
+function openEditSingle(idx) {
+    const a = articles[idx];
+    document.getElementById('editArticleIndex').value = idx;
+    document.getElementById('editTitle').value   = a.title;
+    document.getElementById('editSummary').value = a.summary;
+    document.getElementById('editContent').value = a.content;
+    document.getElementById('editCategoryGroup').querySelectorAll('.badge-select').forEach(b=>{
+        b.classList.remove('selected');
+        if (b.innerText.trim()===a.category) b.classList.add('selected');
+    });
+    showView('editSingleArticleView','menu-edit');
+}
+
+function saveEditedArticle() {
+    const idx=parseInt(document.getElementById('editArticleIndex').value);
+    const title=document.getElementById('editTitle').value.trim();
+    const summary=document.getElementById('editSummary').value.trim();
+    const content=document.getElementById('editContent').value.trim();
+    const cat=getSelectedCategory('edit');
+    if (!title||!summary||!content||!cat) { showToast('Lütfen tüm alanları doldurun.','danger'); return; }
+    articles[idx]={...articles[idx],title,summary,content,category:cat.label,categoryClass:cat.cls};
+    showToast('Makale başarıyla güncellendi!');
+    showEditArticles();
+}
+
+/* =============================================================
+   SİLME
+============================================================= */
+function askDelete(idx) { deleteTargetIndex=idx; document.getElementById('deleteConfirm').style.display='flex'; }
+function confirmDelete() {
+    if (deleteTargetIndex!==null) articles.splice(deleteTargetIndex,1);
+    deleteTargetIndex=null;
+    document.getElementById('deleteConfirm').style.display='none';
+    showToast('Makale silindi.','secondary');
+    renderMyArticlesList();
+}
+function cancelDelete() { deleteTargetIndex=null; document.getElementById('deleteConfirm').style.display='none'; }
+
+/* =============================================================
+   İSTATİSTİKLER
+============================================================= */
+function renderStats() {
+    const totalLikes    = articles.reduce((s,a)=>s+a.likes,0);
+    const totalComments = articles.reduce((s,a)=>s+a.comments.length,0);
+    const avgLikes      = articles.length ? (totalLikes/articles.length).toFixed(1) : 0;
+    const topArticle    = [...articles].sort((a,b)=>b.likes-a.likes)[0];
+
+    // Özet kartlar
+    document.getElementById('statsTopCards').innerHTML = `
+        <div class="col-6 col-md-3">
+            <div class="stat-card card shadow-sm">
+                <div class="stat-icon" style="background:#e8f0fe;"><i class="bi bi-journal-richtext text-primary"></i></div>
+                <div><div class="stat-value text-primary">${articles.length}</div><div class="stat-label">Toplam Makale</div></div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card card shadow-sm">
+                <div class="stat-icon" style="background:#fdecea;"><i class="bi bi-hand-thumbs-up text-danger"></i></div>
+                <div><div class="stat-value text-danger">${totalLikes}</div><div class="stat-label">Toplam Beğeni</div></div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card card shadow-sm">
+                <div class="stat-icon" style="background:#e6f4ea;"><i class="bi bi-chat-dots text-success"></i></div>
+                <div><div class="stat-value text-success">${totalComments}</div><div class="stat-label">Toplam Yorum</div></div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card card shadow-sm">
+                <div class="stat-icon" style="background:#fff8e1;"><i class="bi bi-stars text-warning"></i></div>
+                <div><div class="stat-value text-warning">${avgLikes}</div><div class="stat-label">Ortalama Beğeni</div></div>
+            </div>
+        </div>`;
+
+    // Kategori bazlı beğeni çubuğu
+    const catMap = {};
+    const catColors = { 'Yapay Zeka':'#0d6efd', 'Siber Güvenlik':'#198754', 'Veri Bilimi':'#ffc107',
+                        'Robotik':'#dc3545', 'IoT':'#0dcaf0', 'Diğer':'#6c757d' };
+    articles.forEach(a => { catMap[a.category] = (catMap[a.category]||0) + a.likes; });
+    const maxCat = Math.max(...Object.values(catMap), 1);
+    document.getElementById('categoryChart').innerHTML = Object.entries(catMap).map(([cat,val])=>`
+        <div class="chart-bar-col">
+            <div class="chart-bar-val">${val}</div>
+            <div class="chart-bar" style="height:${Math.round((val/maxCat)*90)}px;background:${catColors[cat]||'#aaa'};"></div>
+            <div class="chart-bar-label">${cat}</div>
+        </div>`).join('');
+
+    // En çok beğenilen 3
+    const top3 = [...articles].sort((a,b)=>b.likes-a.likes).slice(0,3);
+    const medals = ['🥇','🥈','🥉'];
+    document.getElementById('topLikedList').innerHTML = top3.map((a,i)=>`
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <span style="font-size:1.5rem;">${medals[i]}</span>
+            <div class="flex-grow-1">
+                <div class="fw-semibold small">${a.title}</div>
+                <div class="text-muted" style="font-size:0.75rem;">${a.author} · ${a.category}</div>
+            </div>
+            <span class="badge bg-primary-subtle text-primary"><i class="bi bi-hand-thumbs-up me-1"></i>${a.likes}</span>
+        </div>`).join('');
+
+    // Detay tablosu
+    const maxLikes = Math.max(...articles.map(a=>a.likes), 1);
+    const tbody = document.getElementById('statsTableBody');
+    tbody.innerHTML = [...articles].sort((a,b)=>b.likes-a.likes).map(a=>`
+        <tr>
+            <td class="fw-semibold" style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${a.title}</td>
+            <td><span class="badge ${a.categoryClass}">${a.category}</span></td>
+            <td class="text-muted small">${a.author}</td>
+            <td class="text-muted small">${a.date}</td>
+            <td><strong>${a.likes}</strong></td>
+            <td><strong>${a.comments.length}</strong></td>
+            <td>
+                <div class="mini-bar-wrap">
+                    <div class="mini-bar" style="width:${Math.round((a.likes/maxLikes)*100)}%"></div>
+                </div>
+            </td>
+        </tr>`).join('');
+}
+
+/* =============================================================
+   TOAST
+============================================================= */
+function showToast(msg, type='success') {
+    const colors = { success:'#198754', danger:'#dc3545', secondary:'#6c757d' };
+    const c = document.getElementById('toastContainer');
+    const d = document.createElement('div');
+    d.className = 'toast-msg';
+    d.style.background = colors[type]||colors.success;
+    d.innerHTML = `<i class="bi bi-check-circle me-2"></i>${msg}`;
+    c.appendChild(d);
+    setTimeout(()=>d.remove(), 3000);
+}
+
+/* =============================================================
+   BAŞLANGIÇ
+============================================================= */
+
+/* =============================================================
+   DARK MODE
+============================================================= */
+function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+
+    const btn = document.getElementById('darkModeBtn');
+
+    if (document.body.classList.contains('dark-mode')) {
+        btn.innerHTML = '<i class="bi bi-sun-fill"></i>';
+        localStorage.setItem('darkMode', 'enabled');
+    } else {
+        btn.innerHTML = '<i class="bi bi-moon-fill"></i>';
+        localStorage.setItem('darkMode', 'disabled');
+    }
+}
+
+// Sayfa açıldığında dark mode kontrolü
+window.onload = function () {
+    if (localStorage.getItem('darkMode') === 'enabled') {
+        document.body.classList.add('dark-mode');
+
+        const btn = document.getElementById('darkModeBtn');
+        if (btn) {
+            btn.innerHTML = '<i class="bi bi-sun-fill"></i>';
+        }
+    }
+};
+
+
+showHome();
+</script>
+</body>
+</html>
