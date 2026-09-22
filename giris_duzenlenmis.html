@@ -190,6 +190,38 @@
             icon.classList.add('bi-eye');
         }
     }
+    const feedbackDiv = document.getElementById('passwordFeedback');
+
+// Anlık Şifre Eşleşme Kontrolü
+function checkPasswordMatch() {
+    const p1 = passInput.value;
+    const p2 = confirmInput.value;
+
+    if (p2.length === 0) {
+        feedbackDiv.style.display = 'none';
+        return false;
+    }
+
+    feedbackDiv.style.display = 'block';
+
+    if (p1 === p2) {
+        feedbackDiv.className = 'small mt-1 text-success';
+        feedbackDiv.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Şifreler eşleşiyor.';
+        return true;
+    } else {
+        feedbackDiv.className = 'small mt-1 text-danger';
+        feedbackDiv.innerHTML = '<i class="bi bi-x-circle-fill me-1"></i> Şifreler birbiriyle eşleşmiyor!';
+        return false;
+    }
+}
+
+// İkinci şifre yazılırken anlık kontrol et:
+confirmInput.addEventListener('input', checkPasswordMatch);
+
+// İlk şifre değiştirildiğinde de kontrolün güncellenmesi için (passInput.addEventListener('input', ...) bloğunun en sonuna ekle):
+if (confirmInput.value.length > 0) {
+    checkPasswordMatch();
+}
 
 </script>
 </body>
